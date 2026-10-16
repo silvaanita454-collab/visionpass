@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VisionPass – Controle de Acesso Facial, Frequência e Gestão Escolar</title>
+  <meta name="description" content="VisionPass: Plataforma integrada de controle de acesso por biometria facial, registro inteligente de frequência e acompanhamento em tempo real para pais e instituições.">
+
+  <!-- Fontes do Google: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Estilos da Aplicação -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/turnstile.css">
+</head>
+<body>
+
+  <!-- Barra Superior de Navegação -->
+  <header class="navbar">
+    <div class="brand" onclick="App.navigateTo('view-turnstile')">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </div>
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span class="brand-title">VisionPass</span>
+          <span class="brand-badge">SISTEMA ATIVO</span>
+        </div>
+        <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">
+          Colégio Inovação & Tecnologia
+        </div>
+      </div>
+    </div>
+
+    <!-- Links de Navegação por Perfil -->
+    <nav class="nav-links">
+      <button class="nav-btn nav-btn-kiosk active" data-view="view-turnstile" id="nav-turnstile">
+        <span>🛡️</span> Catraca Facial
+      </button>
+      <button class="nav-btn" data-view="view-parent" id="nav-parent">
+        <span>👨‍👩‍👦</span> Área dos Pais
+      </button>
+      <button class="nav-btn" data-view="view-student" id="nav-student">
+        <span>🎓</span> Conta Kid
+      </button>
+      <button class="nav-btn" data-view="view-teacher" id="nav-teacher">
+        <span>📚</span> Professores
+      </button>
+      <button class="nav-btn" data-view="view-coord" id="nav-coord">
+        <span>📋</span> Coordenação
+      </button>
+      <button class="nav-btn" data-view="view-admin" id="nav-admin">
+        <span>⚙️</span> Direção / ADM
+      </button>
+    </nav>
+
+    <!-- Sessão do Usuário & Cadastros -->
+    <div class="user-control">
+      <div class="session-badge">
+        <img id="session-user-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop" class="session-avatar" alt="Avatar">
+        <div class="session-info">
+          <span id="session-user-name" class="session-name">Usuário</span>
+          <span id="session-user-role" class="session-role">PERFIL</span>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="App.openRegisterParentModal()" title="Novo Responsável">
+        <span>+</span> Pais
+      </button>
+      <button class="btn btn-secondary btn-sm" onclick="App.openRegisterStaffModal()" title="Novo Funcionário">
+        <span>+</span> Funcionário
+      </button>
+    </div>
+  </header>
+
+  <!-- Barra de Troca Rápida de Usuários de Demonstração (Permite testar todos os perfis instantaneamente) -->
+  <div class="role-bar">
+    <div class="role-bar-label">
+      <span>⚡ Alternar Perfil Demo:</span>
+    </div>
+    <div class="role-chips" id="role-chips-container">
+      <!-- Chips gerados dinamicamente via JavaScript -->
+    </div>
+  </div>
+
+  <main class="container">
+
+    <!-- ====================================================================
+         SEÇÃO 1: CATRACA FACIAL & CONTROLE DE ACESSO (Sprints 5 & 9)
+         ==================================================================== -->
+    <section id="view-turnstile" class="view-section active">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">
+            <span>🛡️</span> Terminal de Acesso Facial Integrado
+          </h1>
+          <p class="page-subtitle">
+            Reconhecimento biométrico em tempo real • Validação de autorização • Registro instantâneo de presença e alerta aos pais
+          </p>
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+          <select id="turnstile-direction" class="form-control" style="width: auto; padding: 0.45rem 1rem;">
+            <option value="entry">Modo: ENTRADA na Escola</option>
+            <option value="exit">Modo: SAÍDA da Escola</option>
+          </select>
+          <button id="btn-start-camera" class="btn btn-secondary btn-sm">
+            <span>📹</span> Ligar Webcam Real
+          </button>
+        </div>
+      </div>
+
+      <div class="turnstile-layout">
+        <!-- Coluna da Esquerda: Câmera & Visor Biométrico -->
+        <div class="kiosk-camera-card">
+          <div class="camera-header">
+            <div class="kiosk-status-pill">
+              <span class="pulse-dot"></span>
+              <span>BIOMETRIA FACIAL ATIVA</span>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">
+              CATRACA #01 • PORTARIA PRINCIPAL
+            </div>
+          </div>
+
+          <!-- Viewport do Reconhecimento Facial -->
+          <div class="camera-viewport" id="camera-viewport">
+            <video id="kiosk-video" class="video-stream" autoplay playsinline muted style="display: none;"></video>
+            <img id="camera-fallback-display" class="camera-fallback-img" 
+                 src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=600&h=450&fit=crop" 
+                 alt="Pré-visualização Facial">
+
+            <!-- Target Box Holográfico com Linha de Varredura Laser -->
+            <div class="face-scanner-overlay">
+              <div class="face-target-box">
+                <div class="corner corner-tl"></div>
+                <div class="corner corner-tr"></div>
+                <div class="corner corner-bl"></div>
+                <div class="corner corner-br"></div>
+                <div class="scan-line"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Indicador de Vivacidade (Liveness Detection - Anti-spoofing) -->
+          <div class="liveness-indicator">
+            <div class="liveness-badge">
+              <span>👁️</span> Detecção de Vivacidade Facial (Anti-Fraude):
+            </div>
+            <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.82rem;">
+              <input type="checkbox" id="chk-liveness" checked>
+              <span>Vivacidade Aprovada</span>
+            </label>
+          </div>
+
+          <!-- Seletor de Testes Rápidos dos Cenários de Negócio -->
+          <div class="quick-test-section">
+            <div class="quick-test-title">Simular Passagem pela Catraca:</div>
+            <div class="test-scenarios-grid">
+              <button class="btn-test" onclick="TurnstileModule.simulatePass('joao')">
+                <strong style="color: var(--emerald-400);">✓ Aluno Regular:</strong> João Silva (3º EM)
+              </button>
+              <button class="btn-test" onclick="TurnstileModule.simulatePass('sofia')">
+                <strong style="color: var(--emerald-400);">✓ Aluna Regular:</strong> Sofia Silveira
+              </button>
+              <button class="btn-test" onclick="TurnstileModule.simulatePass('prof_carlos')">
+                <strong style="color: var(--cyan-400);">👨‍🏫 Docente:</strong> Prof. Carlos Mendes
+              </button>
+              <button class="btn-test" onclick="TurnstileModule.simulatePass('coord_mariana')">
+                <strong style="color: var(--cyan-400);">📋 Coordenação:</strong> Mariana Vasconcelos
+              </button>
+              <button class="btn-test" onclick="TurnstileModule.simulatePass('gabriel_blocked')">
+                <strong style="color: var(--rose-400);">✕ Aluno Bloqueado:</strong> Gabriel Oliveira
+              </button>
+              <button class="btn-test" onclick="TurnstileModule.simulatePass('unknown')">
+                <strong style="color: var(--amber-400);">✕ Não Cadastrado:</strong> Desconhecido
+              </button>
+              <button class="btn-test" onclick="TurnstileModule.simulatePass('liveness_failed')" style="grid-column: span 2;">
+                <strong style="color: var(--rose-400);">⚠️ Falha de Vivacidade:</strong> Foto Estática / Tentativa de Fraude
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coluna da Direita: Totem Físico da Catraca & Resultado -->
+        <div>
+          <div class="physical-gate-container" id="physical-gate">
+            <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">
+              Mecanismo Físico de Bloqueio
+            </div>
+
+            <div class="gate-chassis">
+              <div class="gate-screen" id="gate-screen">
+                <span>AGUARDANDO</span>
+                <span>APROXIMAÇÃO</span>
+              </div>
+              <div class="gate-rotor" id="gate-rotor">
+                <div class="gate-rotor-arm"></div>
+                <div class="gate-rotor-arm"></div>
+                <div class="gate-rotor-arm"></div>
+              </div>
+              <div class="gate-led-strip"></div>
+            </div>
+
+            <!-- Card de Resultado do Reconhecimento -->
+            <div class="access-result-card" id="access-result-card">
+              <div class="result-person">
+                <img id="result-avatar" class="result-avatar" src="" alt="Avatar">
+                <div>
+                  <div id="result-name" class="result-name">Nome da Pessoa</div>
+                  <div id="result-meta" class="result-meta">Turma / Cargo</div>
+                </div>
+                <div style="margin-left: auto;">
+                  <span id="result-badge" class="badge badge-success">LIBERADO</span>
+                </div>
+              </div>
+              <div id="result-msg" style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.25rem;"></div>
+            </div>
+          </div>
+
+          <!-- Histórico em Tempo Real de Passagens Recentes -->
+          <div class="card" style="margin-top: 1.5rem;">
+            <div class="card-title">
+              <span>Últimos Acessos Registrados</span>
+              <button class="btn btn-secondary btn-sm" onclick="TurnstileModule.refreshRecentLogs()">Atualizar</button>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Status</th>
+                    <th>Pessoa</th>
+                    <th>Tipo</th>
+                    <th>Horário</th>
+                  </tr>
+                </thead>
+                <tbody id="kiosk-recent-logs">
+                  <!-- Inserido dinamicamente via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         SEÇÃO 2: ÁREA DOS PAIS E RESPONSÁVEIS (Sprint 7 & 4)
+         ==================================================================== -->
+    <section id="view-parent" class="view-section">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">
+            <span>👨‍👩‍👦</span> Portal da Família – Acompanhamento em Tempo Real
+          </h1>
+          <p class="page-subtitle">
+            Monitore a frequência escolar, registros de catraca e receba notificações imediatas de seus filhos.
+          </p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn btn-primary" onclick="App.openLinkModal()">
+            <span>+</span> Vincular Novo Filho (Conta Kid)
+          </button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; align-items: start;">
+        <!-- Lista de Filhos / Dependentes -->
+        <div>
+          <div class="card-title" style="margin-bottom: 1rem;">
+            <span>Meus Dependentes Matriculados</span>
+          </div>
+          <div id="parent-dependents-container">
+            <!-- Dependentes renderizados dinamicamente -->
+          </div>
+        </div>
+
+        <!-- Alertas e Notificações em Tempo Real -->
+        <div>
+          <div class="card">
+            <div class="card-title">
+              <span>🔔 Central de Alertas</span>
+              <span class="badge badge-info">Em tempo real</span>
+            </div>
+            <div id="parent-notifications-list">
+              <!-- Alertas dinâmicos -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         SEÇÃO 3: CONTA KID / PERFIL DO ALUNO (Sprint 2)
+         ==================================================================== -->
+    <section id="view-student" class="view-section">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">
+            <span>🎓</span> Minha Conta Kid – Identidade Escolar Digital
+          </h1>
+          <p class="page-subtitle">
+            Crachá digital biométrico, acompanhamento de frequência e registros de entrada/saída.
+          </p>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 350px 1fr; gap: 2rem;">
+        <!-- Crachá Digital Holográfico -->
+        <div class="card" style="text-align: center; border: 2px solid rgba(6, 182, 212, 0.4); background: radial-gradient(circle at top, #162032 0%, #0d121c 100%);">
+          <div style="font-size: 0.75rem; letter-spacing: 1px; color: var(--cyan-400); font-weight: 700; margin-bottom: 1rem;">
+            CRACHÁ DE IDENTIFICAÇÃO BIOMÉTRICA
+          </div>
+          <img id="kid-avatar" src="" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin: 0 auto 1rem; border: 3px solid var(--cyan-400); box-shadow: var(--shadow-neon-cyan);">
+          <h2 id="kid-name" style="font-size: 1.3rem; font-weight: 800;">Aluno</h2>
+          <p style="color: var(--cyan-400); font-weight: 700; font-family: monospace; font-size: 0.95rem; margin-top: 0.25rem;" id="kid-reg">MAT-0000</p>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;" id="kid-class">Turma</p>
+
+          <div style="background: rgba(255, 255, 255, 0.05); padding: 1rem; border-radius: var(--radius-md); text-align: left; font-size: 0.82rem;">
+            <div style="margin-bottom: 0.4rem;"><strong>Status Biométrico:</strong> <span style="color: var(--emerald-400);">Cadastrado ✓</span></div>
+            <div style="margin-bottom: 0.4rem;"><strong>Instituição:</strong> Colégio Inovação</div>
+            <div><strong>Responsáveis Vinculados:</strong></div>
+            <div id="kid-parents-list" style="margin-top: 0.35rem; display: flex; flex-wrap: wrap; gap: 0.25rem;"></div>
+          </div>
+        </div>
+
+        <!-- Estatísticas Acadêmicas de Presença do Aluno -->
+        <div>
+          <div class="stats-grid">
+            <div class="stat-card stat-success">
+              <div class="stat-label">Minha Frequência</div>
+              <div class="stat-value" id="kid-freq-rate">--%</div>
+              <div class="stat-desc">Índice geral do semestre</div>
+            </div>
+            <div class="stat-card stat-cyan">
+              <div class="stat-label">Dias Presentes</div>
+              <div class="stat-value" id="kid-present-days">--</div>
+              <div class="stat-desc">Aulas com registro na catraca</div>
+            </div>
+            <div class="stat-card stat-danger">
+              <div class="stat-label">Faltas</div>
+              <div class="stat-value" id="kid-absent-days">--</div>
+              <div class="stat-desc">Ausências registradas</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Avisos e Normas de Acesso</div>
+            <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6;">
+              Ao chegar ao colégio, posicione-se a aproximadamente 50cm da câmera da catraca facial. Aguarde a confirmação luminosa verde e o sinal sonoro antes de passar. Em caso de sinal vermelho, dirija-se à coordenação.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         SEÇÃO 4: PROFESSORES (Sprint 9)
+         ==================================================================== -->
+    <section id="view-teacher" class="view-section">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">
+            <span>📚</span> Portal do Professor – Turmas e Diário de Frequência
+          </h1>
+          <p class="page-subtitle">
+            Acompanhe a frequência dos alunos das suas turmas e realize chamadas manuais quando necessário.
+          </p>
+        </div>
+      </div>
+
+      <div id="teacher-classes-container">
+        <!-- Turmas do professor renderizadas via JS -->
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         SEÇÃO 5: COORDENAÇÃO (Sprint 9)
+         ==================================================================== -->
+    <section id="view-coord" class="view-section">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">
+            <span>📋</span> Coordenação Pedagógica – Visão Geral
+          </h1>
+          <p class="page-subtitle">
+            Acompanhamento de fluxo de turmas, alunos e validação de presença institucional.
+          </p>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card stat-cyan">
+          <div class="stat-label">Alunos na Instituição</div>
+          <div class="stat-value" id="coord-stat-students">--</div>
+        </div>
+        <div class="stat-card stat-success">
+          <div class="stat-label">Presentes Hoje</div>
+          <div class="stat-value" id="coord-stat-present">--</div>
+        </div>
+        <div class="stat-card stat-danger">
+          <div class="stat-label">Ausentes Hoje</div>
+          <div class="stat-value" id="coord-stat-absent">--</div>
+        </div>
+        <div class="stat-card stat-purple">
+          <div class="stat-label">Frequência Geral</div>
+          <div class="stat-value" id="coord-stat-rate">--%</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Turmas da Escola</div>
+        <div id="coord-classes-list"></div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         SEÇÃO 6: ADMINISTRAÇÃO E DIREÇÃO (Sprints 1, 8, 10)
+         ==================================================================== -->
+    <section id="view-admin" class="view-section">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">
+            <span>⚙️</span> Painel Administrativo & Direção Escolar
+          </h1>
+          <p class="page-subtitle">
+            Gestão global de alunos, aprovação de funcionários institucionais, segurança e auditoria.
+          </p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn btn-primary" onclick="App.openNewStudentModal()">
+            <span>+</span> Cadastrar Novo Aluno
+          </button>
+        </div>
+      </div>
+
+      <!-- Métricas Globais da Instituição (Sprint 10) -->
+      <div class="stats-grid">
+        <div class="stat-card stat-cyan">
+          <div class="stat-label">Total de Alunos</div>
+          <div class="stat-value" id="stat-total-students">--</div>
+          <div class="stat-desc">Matriculados no colégio</div>
+        </div>
+        <div class="stat-card stat-success">
+          <div class="stat-label">Alunos Presentes</div>
+          <div class="stat-value" id="stat-present-today">--</div>
+          <div class="stat-desc">Registrados na catraca hoje</div>
+        </div>
+        <div class="stat-card stat-danger">
+          <div class="stat-label">Alunos Ausentes</div>
+          <div class="stat-value" id="stat-absent-today">--</div>
+          <div class="stat-desc">Sem passagem hoje</div>
+        </div>
+        <div class="stat-card stat-purple">
+          <div class="stat-label">Docentes Presentes</div>
+          <div class="stat-value" id="stat-teachers-present">--</div>
+          <div class="stat-desc">Presença registrada</div>
+        </div>
+        <div class="stat-card stat-warning">
+          <div class="stat-label">Acessos Negados</div>
+          <div class="stat-value" id="stat-denied-today">--</div>
+          <div class="stat-desc">Bloqueios de segurança</div>
+        </div>
+        <div class="stat-card stat-cyan">
+          <div class="stat-label">Entradas Totais</div>
+          <div class="stat-value" id="stat-entries-today">--</div>
+          <div class="stat-desc">Passagens registradas</div>
+        </div>
+      </div>
+
+      <!-- SPRINT 8: APROVAÇÃO INSTITUCIONAL DE FUNCIONÁRIOS -->
+      <div class="card" style="margin-bottom: 2rem; border-top: 4px solid var(--amber-500);">
+        <div class="card-title">
+          <span>Solicitações de Acesso Institucional (Aprovação Obrigatória de ADM)</span>
+          <span class="badge badge-warning" id="pending-staff-badge">0 Pendentes</span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nome Completo</th>
+                <th>E-mail</th>
+                <th>Cargo Solicitado</th>
+                <th>Data da Solicitação</th>
+                <th>Ações do Administrador</th>
+              </tr>
+            </thead>
+            <tbody id="admin-pending-staff-list">
+              <!-- Preenchido via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- GESTÃO DE ALUNOS & CONTROLE DE BLOQUEIO NA CATRACA -->
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-title" style="flex-wrap: wrap; gap: 1rem;">
+          <span>Alunos Matriculados e Status de Acesso à Catraca</span>
+          <input type="text" id="admin-student-search" class="form-control" style="max-width: 320px;" placeholder="Buscar aluno por nome ou matrícula...">
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Aluno</th>
+                <th>Matrícula</th>
+                <th>Turma</th>
+                <th>Frequência</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="admin-students-table-body">
+              <!-- Preenchido via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SPRINT 10: AUDITORIA E LOGS DE SEGURANÇA -->
+      <div class="card">
+        <div class="card-title">
+          <span>Logs de Auditoria e Segurança (LGPD & Conformidade)</span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Ação</th>
+                <th>Usuário / Origem</th>
+                <th>Detalhes</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="admin-audit-logs-table">
+              <!-- Preenchido via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ====================================================================
+       MODAIS DO SISTEMA
+       ==================================================================== -->
+
+  <!-- Modal 1: Vincular Dependente (Sprint 4) -->
+  <div class="modal-overlay" id="modal-link-dependent">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Vincular Filho à Conta do Responsável</h2>
+        <button class="modal-close" onclick="App.closeModal('modal-link-dependent')">&times;</button>
+      </div>
+      <form onsubmit="App.handleLinkDependentSubmit(event)">
+        <div class="modal-body">
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            A Conta Kid já deve estar previamente cadastrada pela instituição escolar.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Número de Matrícula do Aluno:</label>
+            <input type="text" id="link-student-reg" class="form-control" placeholder="Ex: MAT-2026-001" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Data de Nascimento do Aluno:</label>
+            <input type="date" id="link-student-birth" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Grau de Parentesco / Vínculo:</label>
+            <select id="link-relationship" class="form-control">
+              <option value="Pai">Pai</option>
+              <option value="Mãe">Mãe</option>
+              <option value="Tutor Legal">Tutor Legal</option>
+              <option value="Responsável Financeiro">Responsável Financeiro</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-link-dependent')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Confirmar Vínculo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Cadastrar Novo Aluno (Sprint 2) -->
+  <div class="modal-overlay" id="modal-new-student">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Cadastrar Novo Aluno (Conta Kid)</h2>
+        <button class="modal-close" onclick="App.closeModal('modal-new-student')">&times;</button>
+      </div>
+      <form onsubmit="App.handleCreateStudentSubmit(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Nome Completo do Aluno:</label>
+            <input type="text" id="new-st-name" class="form-control" placeholder="Nome do aluno" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Número de Matrícula (Único):</label>
+            <input type="text" id="new-st-reg" class="form-control" placeholder="Ex: MAT-2026-006" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Data de Nascimento:</label>
+            <input type="date" id="new-st-birth" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Turma:</label>
+            <select id="new-st-class" class="form-control">
+              <option value="1º Ano Médio A">1º Ano Médio A</option>
+              <option value="2º Ano Médio B">2º Ano Médio B</option>
+              <option value="3º Ano Médio Terceirão">3º Ano Médio Terceirão</option>
+              <option value="9º Ano Fundamental">9º Ano Fundamental</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Telefone de Emergência:</label>
+            <input type="text" id="new-st-contact" class="form-control" placeholder="(11) 99999-9999">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-new-student')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar Aluno</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Cadastro de Responsável (Sprint 3) -->
+  <div class="modal-overlay" id="modal-register-parent">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Cadastro de Pai / Responsável</h2>
+        <button class="modal-close" onclick="App.closeModal('modal-register-parent')">&times;</button>
+      </div>
+      <form onsubmit="App.handleRegisterParentSubmit(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Nome Completo:</label>
+            <input type="text" id="parent-name" class="form-control" placeholder="Seu nome completo" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">CPF (com validação oficial):</label>
+            <input type="text" id="parent-cpf" class="form-control" placeholder="000.000.000-00" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-mail:</label>
+            <input type="email" id="parent-email" class="form-control" placeholder="seu@email.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Telefone / WhatsApp:</label>
+            <input type="text" id="parent-phone" class="form-control" placeholder="(11) 98888-7777">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Senha de Acesso:</label>
+            <input type="password" id="parent-pwd" class="form-control" placeholder="Crie uma senha segura" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-register-parent')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Concluir Cadastro</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 4: Solicitação de Cadastro de Funcionário (Sprint 8) -->
+  <div class="modal-overlay" id="modal-register-staff">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Solicitar Acesso Institucional</h2>
+        <button class="modal-close" onclick="App.closeModal('modal-register-staff')">&times;</button>
+      </div>
+      <form onsubmit="App.handleRegisterStaffSubmit(event)">
+        <div class="modal-body">
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem;">
+            O acesso será analisado e liberado pelo Administrador da instituição escolar.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Nome Completo:</label>
+            <input type="text" id="staff-name" class="form-control" placeholder="Nome do funcionário" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-mail Institucional:</label>
+            <input type="email" id="staff-email" class="form-control" placeholder="nome@visionpass.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">CPF:</label>
+            <input type="text" id="staff-cpf" class="form-control" placeholder="000.000.000-00" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Telefone:</label>
+            <input type="text" id="staff-phone" class="form-control" placeholder="(11) 98888-0000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cargo / Função Institucional:</label>
+            <select id="staff-role" class="form-control">
+              <option value="teacher">Professor(a)</option>
+              <option value="coordinator">Coordenação Pedagógica</option>
+              <option value="director">Diretoria</option>
+              <option value="staff">Outro Funcionário Autorizado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Senha:</label>
+            <input type="password" id="staff-pwd" class="form-control" placeholder="Senha" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-register-staff')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Enviar Solicitação</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 5: Histórico Completo de Frequência do Aluno (Sprint 6) -->
+  <div class="modal-overlay" id="modal-student-history">
+    <div class="modal" style="max-width: 700px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="history-modal-title">Histórico de Frequência</h2>
+        <button class="modal-close" onclick="App.closeModal('modal-student-history')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="history-summary-box"></div>
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Status</th>
+                <th>Entrada</th>
+                <th>Saída</th>
+                <th>Origem</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="App.closeModal('modal-student-history')">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 6: Chamada de Turma (Sprint 9) -->
+  <div class="modal-overlay" id="modal-rollcall">
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="rollcall-modal-title">Diário de Chamada</h2>
+        <button class="modal-close" onclick="App.closeModal('modal-rollcall')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="rollcall-students-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="App.closeModal('modal-rollcall')">Concluir Chamada</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Container de Toasts de Notificação -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/turnstile.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

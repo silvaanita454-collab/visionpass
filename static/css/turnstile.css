@@ -1,0 +1,375 @@
+/* ==========================================================================
+   VisionPass - Terminal & Catraca Facial (Kiosk Mode)
+   Estilos específicos da tela de reconhecimento biométrico e simulação de catraca
+   ========================================================================== */
+
+.turnstile-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .turnstile-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Painel da Câmera / Visor Biométrico */
+.kiosk-camera-card {
+  background: radial-gradient(circle at center, #111827 0%, #080c14 100%);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  position: relative;
+  box-shadow: 0 0 35px rgba(6, 182, 212, 0.15);
+  overflow: hidden;
+}
+
+.camera-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.kiosk-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 4px 12px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--emerald-400);
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--emerald-500);
+  box-shadow: 0 0 8px var(--emerald-400);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+/* Viewport da Câmera */
+.camera-viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #030712;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.video-stream, .canvas-capture {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Espelhamento natural de webcam */
+}
+
+/* Fallback ou Imagem Ativa do Rosto */
+.camera-fallback-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Target Box & Linha de Varredura Facial */
+.face-scanner-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.face-target-box {
+  width: 55%;
+  height: 65%;
+  border: 2px dashed rgba(6, 182, 212, 0.6);
+  border-radius: 24px;
+  position: relative;
+  box-shadow: inset 0 0 25px rgba(6, 182, 212, 0.15);
+  transition: all 0.3s ease;
+}
+
+/* Cantoneiras estilizadas */
+.corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-color: var(--cyan-400);
+  border-style: solid;
+}
+.corner-tl { top: -2px; left: -2px; border-width: 4px 0 0 4px; border-top-left-radius: 12px; }
+.corner-tr { top: -2px; right: -2px; border-width: 4px 4px 0 0; border-top-right-radius: 12px; }
+.corner-bl { bottom: -2px; left: -2px; border-width: 0 0 4px 4px; border-bottom-left-radius: 12px; }
+.corner-br { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; border-bottom-right-radius: 12px; }
+
+/* Linha de Scanner Laser */
+.scan-line {
+  position: absolute;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--cyan-400), #ffffff, var(--cyan-400), transparent);
+  box-shadow: 0 0 15px var(--cyan-400);
+  animation: scanSweep 2.2s infinite ease-in-out;
+}
+
+@keyframes scanSweep {
+  0% { top: 5%; opacity: 0.8; }
+  50% { top: 95%; opacity: 1; }
+  100% { top: 5%; opacity: 0.8; }
+}
+
+/* Estados de feedback visual da câmera */
+.camera-viewport.granted .face-target-box {
+  border-color: var(--emerald-500);
+  border-style: solid;
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.5), inset 0 0 30px rgba(16, 185, 129, 0.3);
+}
+.camera-viewport.granted .scan-line {
+  background: var(--emerald-400);
+  box-shadow: 0 0 20px var(--emerald-400);
+}
+.camera-viewport.granted .corner { border-color: var(--emerald-400); }
+
+.camera-viewport.denied .face-target-box {
+  border-color: var(--rose-500);
+  border-style: solid;
+  box-shadow: 0 0 30px rgba(244, 63, 94, 0.6), inset 0 0 30px rgba(244, 63, 94, 0.3);
+}
+.camera-viewport.denied .scan-line {
+  background: var(--rose-400);
+  box-shadow: 0 0 20px var(--rose-400);
+}
+.camera-viewport.denied .corner { border-color: var(--rose-400); }
+
+/* Vivacidade & Instruções */
+.liveness-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(6, 182, 212, 0.05);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+}
+
+.liveness-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  color: var(--cyan-400);
+}
+
+/* ==========================================================================
+   Representação Física da Catraca (Turnstile Gate Simulator)
+   ========================================================================== */
+.physical-gate-container {
+  background: var(--bg-dark-800);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.gate-chassis {
+  width: 180px;
+  height: 220px;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid #334155;
+  border-radius: 16px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0;
+  margin: 1.5rem 0;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+}
+
+/* Display do Totem */
+.gate-screen {
+  width: 140px;
+  height: 60px;
+  background: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--cyan-400);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 4px;
+}
+
+/* Braços mecânicos da catraca (Tripé) */
+.gate-rotor {
+  position: absolute;
+  bottom: 40px;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 4px solid #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.gate-rotor-arm {
+  position: absolute;
+  width: 70px;
+  height: 8px;
+  background: linear-gradient(90deg, #94a3b8, #cbd5e1);
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+.gate-rotor-arm:nth-child(1) { transform: rotate(0deg) translate(30px); }
+.gate-rotor-arm:nth-child(2) { transform: rotate(120deg) translate(30px); }
+.gate-rotor-arm:nth-child(3) { transform: rotate(240deg) translate(30px); }
+
+/* Animação de Giro da Catraca ao Liberar */
+.gate-rotor.spinning {
+  transform: rotate(120deg);
+}
+
+/* LED de Status da Catraca */
+.gate-led-strip {
+  width: 100%;
+  height: 8px;
+  background: #334155;
+  margin-top: auto;
+  transition: all 0.3s ease;
+}
+
+.physical-gate-container.unlocked .gate-led-strip {
+  background: var(--emerald-500);
+  box-shadow: 0 0 15px var(--emerald-400);
+}
+
+.physical-gate-container.unlocked .gate-screen {
+  color: var(--emerald-400);
+  border-color: var(--emerald-500);
+}
+
+.physical-gate-container.locked .gate-led-strip {
+  background: var(--rose-500);
+  box-shadow: 0 0 15px var(--rose-500);
+}
+
+.physical-gate-container.locked .gate-screen {
+  color: var(--rose-400);
+  border-color: var(--rose-500);
+}
+
+/* Resultado do Acesso */
+.access-result-card {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-dark-700);
+  text-align: left;
+  display: none;
+}
+
+.access-result-card.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+.result-person {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.result-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.result-name {
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.result-meta {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* Seletor Rápido de Testes da Catraca */
+.quick-test-section {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 1rem;
+  width: 100%;
+}
+
+.quick-test-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+  text-align: left;
+}
+
+.test-scenarios-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.btn-test {
+  padding: 0.55rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-dark-600);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-align: left;
+}
+
+.btn-test:hover {
+  background: var(--bg-dark-700);
+  color: var(--text-primary);
+  border-color: var(--cyan-500);
+}

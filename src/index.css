@@ -1,0 +1,180 @@
+@import "tailwindcss";
+
+@theme {
+  --color-vp-bg: #09070D;
+  --color-vp-bg-secondary: #110D18;
+  --color-vp-surface: #17121F;
+  --color-vp-surface-hover: #21192D;
+
+  --color-vp-primary: #7C3AED;
+  --color-vp-primary-light: #A855F7;
+  --color-vp-primary-dark: #4C1D95;
+  --color-vp-accent: #C084FC;
+
+  --color-vp-text-primary: #F8F7FF;
+  --color-vp-text-secondary: #B8B0C7;
+
+  --color-vp-border: rgba(168, 85, 247, 0.20);
+
+  --font-sans: "Plus Jakarta Sans", "Poppins", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+:root {
+  --background: #09070D;
+  --background-secondary: #110D18;
+  --surface: #17121F;
+  --surface-hover: #21192D;
+
+  --primary: #7C3AED;
+  --primary-light: #A855F7;
+  --primary-dark: #4C1D95;
+  --accent: #C084FC;
+
+  --text-primary: #F8F7FF;
+  --text-secondary: #B8B0C7;
+
+  --border: rgba(168, 85, 247, 0.20);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    background-color: var(--background);
+    color: var(--text-primary);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+}
+
+/* Redução de movimento para acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Animações sutis e mascote */
+@keyframes viziFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1.5deg);
+  }
+}
+
+@keyframes viziBlink {
+  0%, 96%, 100% {
+    transform: scaleY(1);
+  }
+  98% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes purpleGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px -3px rgba(124, 58, 237, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 25px 2px rgba(168, 85, 247, 0.5);
+  }
+}
+
+@keyframes scanlaser {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.85;
+  }
+  80% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(120%);
+    opacity: 0;
+  }
+}
+
+.animate-vizi-float {
+  animation: viziFloat 4s ease-in-out infinite;
+}
+
+.animate-vizi-blink {
+  animation: viziBlink 3.8s ease-in-out infinite;
+}
+
+.animate-purple-glow {
+  animation: purpleGlow 3s ease-in-out infinite;
+}
+
+.animate-scanlaser {
+  animation: scanlaser 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Utilitários de Superfície e Cards VisionPass */
+.vp-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vp-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(168, 85, 247, 0.45);
+  box-shadow: 0 10px 25px -4px rgba(124, 58, 237, 0.2);
+}
+
+.vp-btn-primary {
+  background: linear-gradient(135deg, #7C3AED, #A855F7);
+  border-radius: 12px;
+  color: #ffffff;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 10px rgba(124, 58, 237, 0.3);
+}
+
+.vp-btn-primary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(168, 85, 247, 0.45);
+}
+
+.vp-btn-secondary {
+  background-color: transparent;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  border-radius: 12px;
+  color: #F8F7FF;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.vp-btn-secondary:hover {
+  background-color: rgba(124, 58, 237, 0.12);
+  border-color: #A855F7;
+  transform: translateY(-1px);
+}
+
+/* Glassmorphism escuro */
+.glass-header {
+  background: rgba(9, 7, 13, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
