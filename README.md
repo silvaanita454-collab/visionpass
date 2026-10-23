@@ -1,0 +1,1 @@
+# 3E-etec-teste_catraca_facial
